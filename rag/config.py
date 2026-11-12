@@ -12,6 +12,8 @@ class Settings:
     content_url: str
     embed_model: str
     gen_model: str
+    query_prefix: str
+    keyword_weight: float
     top_k: int
     min_score: float
     history_turns: int

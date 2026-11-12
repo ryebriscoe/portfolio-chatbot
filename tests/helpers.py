@@ -16,9 +16,11 @@ class FakeEmbedder:
 
     def __init__(self):
         self.calls = 0
+        self.query_flags = []
 
-    def embed(self, texts):
+    def embed(self, texts, is_query=False):
         self.calls += 1
+        self.query_flags.append(is_query)
         out = np.zeros((len(texts), len(self.VOCAB)), dtype=np.float32)
         for i, text in enumerate(texts):
             tokens = re.findall(r"[a-z]+", text.lower())
