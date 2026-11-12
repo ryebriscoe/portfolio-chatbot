@@ -9,12 +9,10 @@ import logging
 
 import gradio as gr
 
-from rag.chunker import chunk_documents
 from rag.config import load_settings
-from rag.content import ContentUnavailable, load_documents
+from rag.content import ContentUnavailable
 from rag.generate import HFGenerator, gpu
-from rag.index import Index, SentenceTransformerEmbedder
-from rag.pipeline import Bot
+from rag.pipeline import Bot, build_index
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("portfolio-chatbot")
@@ -22,10 +20,8 @@ log = logging.getLogger("portfolio-chatbot")
 settings = load_settings()
 
 try:
-    documents = load_documents(settings.content_url)
-    chunks = chunk_documents(documents)
-    index = Index(chunks, SentenceTransformerEmbedder(settings.embed_model))
-    log.info("indexed %d documents as %d chunks", len(documents), len(chunks))
+    index = build_index(settings)
+    log.info("indexed %d chunks", len(index.chunks))
 except ContentUnavailable:
     log.exception("content unavailable; answering with an 'unavailable' error")
     index = None

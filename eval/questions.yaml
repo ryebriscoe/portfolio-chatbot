@@ -1,4 +1,4 @@
-# Evaluation set (decision D13): 15 answerable, 4 status, 6 unanswerable, 5 off-topic.
+# Evaluation set (decision D13): 16 answerable, 5 status, 6 unanswerable, 5 off-topic.
 # Expectations were written from the site's own content. Re-check them against
 # the live chatbot-content.json whenever the site changes.
 # must_include / must_not_include are case-insensitive substrings.
@@ -109,7 +109,21 @@
   must_include: ["Flask"]
   must_not_include: []
 
+- id: languages-overview
+  group: answerable
+  question: "What programming languages does he know?"
+  expect_sources: [overview-skills]
+  must_include: ["Java", "Python"]
+  must_not_include: ["Rust", "Kotlin", "Swift"]
+
 # ---------- status ----------
+- id: current-courses
+  group: status
+  question: "What courses is he taking right now?"
+  expect_sources: [overview-coursework, cst-370, cst-489]
+  must_include: ["Algorithms"]
+  must_not_include: []
+
 - id: capstone-status
   group: status
   question: "Has he finished his capstone?"

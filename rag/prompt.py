@@ -21,6 +21,11 @@ Rules:
 CONTEXT:"""
 
 NO_CONTENT = "(no relevant content found on the site)"
+# The exact sentence from rule 2. Sent directly, without running the model,
+# when no chunk matches the question (decision D17).
+NOT_COVERED_REPLY = (
+    "That isn't covered on Ariya's portfolio. You can reach him at ariyabriscoe@gmail.com or LinkedIn."
+)
 MAX_TURN_CHARS = 2000
 
 Hit = tuple[Chunk, float]
@@ -28,6 +33,11 @@ Hit = tuple[Chunk, float]
 
 class InvalidQuestion(ValueError):
     """Raised with message "empty" or "too long"."""
+
+
+def is_not_covered(answer: str) -> bool:
+    """True when an answer is the rule-2 "not covered" reply (curly or straight quotes)."""
+    return "isn't covered on ariya's portfolio" in answer.lower().replace("’", "'")
 
 
 def validate_question(question: object, max_chars: int) -> str:

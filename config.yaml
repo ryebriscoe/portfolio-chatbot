@@ -1,9 +1,9 @@
-# Every tunable setting for the chatbot (spec §4.4, decisions D10–D13).
+# Every tunable setting for the chatbot (spec §4.4, decisions D10–D18).
 # Change one value at a time and rerun the eval (eval/run_eval.py).
 
 content_url: https://ryebriscoe.github.io/chatbot-content.json
 embed_model: BAAI/bge-small-en-v1.5
-gen_model: HuggingFaceTB/SmolLM2-360M-Instruct   # placeholder until model selection (D15)
+gen_model: HuggingFaceTB/SmolLM2-360M-Instruct   # placeholder until model selection
 
 # --- retrieval (finding the right chunks) ---
 # bge models expect this instruction in front of questions, not in front of chunks (D15)

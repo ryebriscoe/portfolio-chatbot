@@ -3,9 +3,11 @@ import pytest
 from rag.chunker import Chunk
 from rag.prompt import (
     SYSTEM_PROMPT,
+    NOT_COVERED_REPLY,
     InvalidQuestion,
     build_messages,
     format_context,
+    is_not_covered,
     retrieval_query,
     sanitize_history,
     select_sources,
@@ -106,3 +108,12 @@ def test_select_sources_dedupes_by_doc_and_caps():
         {"id": "cst-338", "title": "CST 338 Software Design", "url": "/courses/cst-338/"},
         {"id": "cst-499", "title": "CST 499 Capstone", "url": "/courses/cst-499/"},
     ]
+
+
+def test_not_covered_reply_matches_the_prompt_rule():
+    assert NOT_COVERED_REPLY == (
+        "That isn't covered on Ariya's portfolio. You can reach him at ariyabriscoe@gmail.com or LinkedIn."
+    )
+    assert is_not_covered(NOT_COVERED_REPLY)
+    assert is_not_covered("Sorry, that isn’t covered on Ariya’s portfolio.")
+    assert not is_not_covered("He built a Spring Boot app.")

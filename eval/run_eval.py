@@ -22,10 +22,8 @@ from pathlib import Path
 import yaml
 
 from eval.scoring import answer_ok, is_refusal, retrieval_hit, summarize, to_markdown
-from rag.chunker import chunk_documents
 from rag.config import load_settings
-from rag.content import load_documents
-from rag.index import Index, SentenceTransformerEmbedder
+from rag.pipeline import build_index
 from rag.prompt import retrieval_query
 
 HERE = Path(__file__).resolve().parent
@@ -65,8 +63,7 @@ def _timed(events):
 
 
 def run_retrieval(questions, settings):
-    index = Index(chunk_documents(load_documents(settings.content_url)),
-                  SentenceTransformerEmbedder(settings.embed_model))
+    index = build_index(settings)
     return [
         _row(q, _doc_ids(index.search(retrieval_query(q["question"], []), settings.top_k, settings.min_score)))
         for q in questions
@@ -77,8 +74,7 @@ def run_local(questions, settings, four_bit):
     from rag.generate import HFGenerator
     from rag.pipeline import Bot
 
-    index = Index(chunk_documents(load_documents(settings.content_url)),
-                  SentenceTransformerEmbedder(settings.embed_model))
+    index = build_index(settings)
     bot = Bot(settings, index, HFGenerator(settings.gen_model, load_in_4bit=four_bit))
     rows = []
     for q in questions:
@@ -123,7 +119,8 @@ def main(argv=None):
 
     summary = summarize(rows)
     summary["model"] = model
-    summary["notes"] = f"top_k={settings.top_k}, min_score={settings.min_score}"
+    summary["notes"] = (f"top_k={settings.top_k}, min_score={settings.min_score}, "
+                        f"keyword_weight={settings.keyword_weight}, prefix={'on' if settings.query_prefix else 'off'}")
     out_dir = HERE / "results"
     out_dir.mkdir(exist_ok=True)
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")

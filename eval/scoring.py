@@ -3,8 +3,9 @@
 import datetime
 import statistics
 
+from rag.prompt import is_not_covered
+
 REFUSAL_PHRASES = ["i can only", "i can't help with", "outside what i can"]
-NOT_COVERED = "isn't covered on ariya's portfolio"
 
 
 def _norm(text: str) -> str:
@@ -22,7 +23,7 @@ def answer_ok(answer: str, must_include: list[str], must_not_include: list[str])
 
 def is_refusal(answer: str) -> bool:
     a = _norm(answer)
-    return NOT_COVERED in a or any(p in a for p in REFUSAL_PHRASES)
+    return is_not_covered(answer) or any(p in a for p in REFUSAL_PHRASES)
 
 
 def _fraction(flags):

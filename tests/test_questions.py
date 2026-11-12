@@ -4,12 +4,12 @@ from collections import Counter
 from eval.run_eval import load_questions
 
 KEYS = {"id", "group", "question", "expect_sources", "must_include", "must_not_include"}
-DOC_ID = re.compile(r"^(cst-\d+[a-z]?|project-[a-z0-9-]+|about-[a-z0-9-]+|cert-[a-z0-9-]+)$")
+DOC_ID = re.compile(r"^(cst-\d+[a-z]?|project-[a-z0-9-]+|about-[a-z0-9-]+|cert-[a-z0-9-]+|overview-[a-z]+)$")
 
 
 def test_group_counts_match_d13():
     counts = Counter(q["group"] for q in load_questions())
-    assert counts == {"answerable": 15, "status": 4, "unanswerable": 6, "off_topic": 5}
+    assert counts == {"answerable": 16, "status": 5, "unanswerable": 6, "off_topic": 5}
 
 
 def test_entries_are_well_formed():

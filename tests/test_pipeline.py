@@ -6,7 +6,8 @@ from helpers import FakeEmbedder, FakeGenerator
 from rag.chunker import chunk_documents
 from rag.config import load_settings
 from rag.index import Index
-from rag.pipeline import Bot
+from rag.pipeline import Bot, build_index
+from rag.prompt import NOT_COVERED_REPLY
 
 
 @pytest.fixture
@@ -51,11 +52,24 @@ def test_ask_unavailable_when_index_none(settings):
     assert gen.calls == []
 
 
-def test_ask_off_topic_has_no_sources(settings, index):
+def test_no_match_replies_not_covered_without_the_model(settings, index):
     gen = FakeGenerator()
     events = list(Bot(settings, index, gen).ask("What's the weather tomorrow?", []))
+    assert events == [{"answer": NOT_COVERED_REPLY, "sources": [], "done": True}]
+    assert gen.calls == []
+
+
+def test_refusal_answer_shows_no_sources(settings, index):
+    gen = FakeGenerator(pieces=["That isn’t covered on Ariya’s portfolio. ", "You can reach him by email."])
+    events = list(Bot(settings, index, gen).ask("Has he worked at Google with Java?", []))
+    assert gen.calls  # the model did run: chunks matched, but it declined
     assert events[-1]["sources"] == []
-    assert gen.calls[0][0]["content"].endswith("(no relevant content found on the site)")
+
+
+def test_build_index_adds_overviews_and_uses_settings(settings, fixture_path):
+    index = build_index(replace(settings, content_url=fixture_path), embedder=FakeEmbedder())
+    assert "overview-skills" in {c.doc_id for c in index.chunks}
+    assert index.keyword_weight == settings.keyword_weight
 
 
 def test_ask_uses_sanitized_history_and_retrieval_query(settings, index):
