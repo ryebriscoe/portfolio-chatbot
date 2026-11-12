@@ -71,7 +71,7 @@ python -m rag.explain "What has he built with Java?"
 
 ```bash
 py -3.12 -m venv .venv
-.venv\Scriptsctivate
+.venv\Scripts\activate
 pip install -r requirements-dev.txt
 pytest tests -v
 set CONTENT_URL=tests/fixtures/content.json
