@@ -1,0 +1,39 @@
+name: test and sync to Hugging Face Space
+
+# Required repo settings:
+#   secret   HF_TOKEN     write-access token from huggingface.co/settings/tokens
+#   variable HF_USERNAME  Hugging Face username that owns the Space
+# The Space id is $HF_USERNAME/ask-about-ariya.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: pip install numpy==2.5.4 pyyaml==6.0.3 pytest==9.2.0
+      - name: Unit tests
+        run: pytest tests -v
+
+  sync:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Push main to the Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: ${{ vars.HF_USERNAME }}
+        run: git push --force "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/ask-about-ariya" HEAD:main
