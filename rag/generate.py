@@ -20,16 +20,23 @@ def gpu(duration: int):
 
 
 class HFGenerator:
-    def __init__(self, model_name: str, device: str | None = None):
+    def __init__(self, model_name: str, device: str | None = None, load_in_4bit: bool = False):
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        if load_in_4bit:  # evaluation on small Colab GPUs (needs bitsandbytes)
+            from transformers import BitsAndBytesConfig
+
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_name, quantization_config=BitsAndBytesConfig(load_in_4bit=True), device_map="auto"
+            )
+            return
         # On ZeroGPU the model must be moved to cuda at startup; set DEVICE=cuda
         # as a Space variable in case torch reports no GPU outside @spaces.GPU.
-        self.device = device or os.environ.get("DEVICE") or ("cuda" if torch.cuda.is_available() else "cpu")
-        dtype = torch.bfloat16 if self.device == "cuda" else torch.float32
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name, dtype=dtype).to(self.device)
+        device = device or os.environ.get("DEVICE") or ("cuda" if torch.cuda.is_available() else "cpu")
+        dtype = torch.bfloat16 if device == "cuda" else torch.float32
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, dtype=dtype).to(device)
 
     def stream(self, messages, temperature, max_new_tokens):
         from transformers import TextIteratorStreamer
