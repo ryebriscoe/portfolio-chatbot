@@ -1,0 +1,56 @@
+{
+  "generated": "2026-11-12T00:00:00-08:00",
+  "documents": [
+    {
+      "id": "cst-438",
+      "type": "course",
+      "title": "CST 438 Software Engineering",
+      "url": "/courses/cst-438/",
+      "text": "Built a Canvas style course management platform with a team: a Java Spring Boot REST backend and a JavaScript front end, deployed to AWS EC2.\n\nWorked in sprints with code review, unit tests, and CI on every pull request.",
+      "status": "completed",
+      "term": "Summer 2026, Term B",
+      "tech": ["Java", "Spring Boot", "JavaScript", "REST APIs", "AWS EC2"],
+      "project": "Canvas Style Course Management Platform",
+      "repo": "https://github.com/cst438-team03-org0/cst438-team-03-registrar",
+      "catalog": "Prepares students for large-scale software development using software engineering principles and techniques."
+    },
+    {
+      "id": "cst-338",
+      "type": "course",
+      "title": "CST 338 Software Design",
+      "url": "/courses/cst-338/",
+      "text": "Designed and built a JavaFX login and registration app with a team, using object-oriented design and JUnit tests, built with Gradle.",
+      "status": "completed",
+      "term": "Spring 2026, Term B",
+      "tech": ["Java", "JavaFX", "JUnit", "Gradle"],
+      "project": "Login and Registration App (JavaFX)",
+      "repo": "https://github.com/BriannaTomasek/CST-338-Project-2-JavaFX"
+    },
+    {
+      "id": "cst-499",
+      "type": "course",
+      "title": "CST 499 Computer Science Capstone",
+      "url": "/courses/cst-499/",
+      "text": "",
+      "status": "planned",
+      "term": "Fall 2026, Term B",
+      "catalog": "Students will work on a capstone project that integrates the knowledge from the program."
+    },
+    {
+      "id": "project-b-a-d-basketball-action-detection",
+      "type": "page",
+      "title": "B.A.D. — basketball action detection",
+      "url": "/projects/",
+      "text": "in progress private repository\n\nA zero-shot system that watches a basketball clip and names the offensive play being run: pick and roll, horns, floppy, or transition.\n\nA Roboflow computer vision model detects players, the ball, and the rim. A vision-language model (Qwen3-VL) watches the annotated video and returns the play in strict JSON. Ariya&rsquo;s build script generates the notebook."
+    },
+    {
+      "id": "cert-ibm-ai-engineering",
+      "type": "certification",
+      "title": "IBM AI Engineering",
+      "url": "/certifications/",
+      "text": "IBM Professional Certificate. Machine learning and deep learning for production AI systems, covering model building, training, and deployment. Progress: 23%.",
+      "status": "in_progress",
+      "tech": ["Python", "Deep learning", "Model deployment"]
+    }
+  ]
+}
