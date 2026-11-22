@@ -5,6 +5,13 @@ API endpoints used by the site widget:
   /warmup() -> {"ready": bool}
 """
 
+# On ZeroGPU, `spaces` must be imported before anything initializes torch,
+# so the model can be moved to "cuda" at startup (decision D21).
+try:
+    import spaces  # noqa: F401
+except ImportError:  # running locally without the spaces package
+    pass
+
 import logging
 
 import gradio as gr
