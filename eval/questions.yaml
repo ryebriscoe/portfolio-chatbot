@@ -1,5 +1,5 @@
 # Evaluation set (decision D13): 16 answerable, 5 status, 6 unanswerable, 5 off-topic.
-# Expectations were written from the site's own content. Re-check them against
+# Expectations were written from the site's own content (last checked 2026-11-22). Re-check them against
 # the live chatbot-content.json whenever the site changes.
 # must_include / must_not_include are case-insensitive substrings.
 
@@ -14,14 +14,14 @@
 - id: computer-vision
   group: answerable
   question: "Tell me about his computer vision project."
-  expect_sources: [project-b-a-d-basketball-action-detection]
+  expect_sources: [project-b-a-d-basketball-action-detector]
   must_include: ["basketball"]
   must_not_include: []
 
-- id: github-actions
+- id: automation
   group: answerable
-  question: "Has he built anything with GitHub Actions?"
-  expect_sources: [project-automated-video-content-pipeline]
+  question: "Has he built anything that publishes to YouTube automatically?"
+  expect_sources: [project-automated-short-form-video-pipeline]
   must_include: ["video"]
   must_not_include: []
 
@@ -60,17 +60,17 @@
   must_include: ["EC2"]
   must_not_include: []
 
-- id: swipemail
+- id: freelance
   group: answerable
-  question: "What is SwipeMail?"
-  expect_sources: [project-swipemail]
-  must_include: ["email"]
+  question: "Has he done any freelance work?"
+  expect_sources: [project-freelance-web-development]
+  must_include: ["website"]
   must_not_include: []
 
 - id: llm-experience
   group: answerable
   question: "What experience does he have with large language models?"
-  expect_sources: [project-automated-video-content-pipeline, project-b-a-d-basketball-action-detection, cert-generative-ai-with-large-language-models]
+  expect_sources: [project-automated-short-form-video-pipeline, project-b-a-d-basketball-action-detector, cert-generative-ai-with-large-language-models]
   must_include: []
   must_not_include: ["fine-tuned his own model"]
 
@@ -105,7 +105,7 @@
 - id: python-web
   group: answerable
   question: "Has he built a web app with Python?"
-  expect_sources: [cst-205, project-automated-video-content-pipeline]
+  expect_sources: [cst-205]
   must_include: ["Flask"]
   must_not_include: []
 
@@ -120,36 +120,36 @@
 - id: current-courses
   group: status
   question: "What courses is he taking right now?"
-  expect_sources: [overview-coursework, cst-370, cst-489]
-  must_include: ["Algorithms"]
-  must_not_include: []
+  expect_sources: [overview-coursework, cst-336, cst-499]
+  must_include: []
+  must_not_include: ["Design and Analysis of Algorithms"]
 
 - id: capstone-status
   group: status
   question: "Has he finished his capstone?"
   expect_sources: [cst-499]
-  must_include: ["plans to"]
+  must_include: ["currently"]
   must_not_include: ["completed the capstone", "finished the capstone", "has completed his capstone"]
 
 - id: algorithms-status
   group: status
   question: "Has he taken an algorithms course?"
   expect_sources: [cst-370]
-  must_include: ["currently"]
-  must_not_include: []
+  must_include: ["algorithm"]
+  must_not_include: ["currently taking", "plans to take"]
 
 - id: internet-programming-status
   group: status
   question: "Has he completed Internet Programming?"
   expect_sources: [cst-336]
-  must_include: ["plans to"]
+  must_include: ["currently"]
   must_not_include: ["has completed internet programming"]
 
 - id: ibm-cert-status
   group: status
   question: "Has he finished the IBM AI Engineering certificate?"
   expect_sources: [cert-ibm-ai-engineering]
-  must_include: ["23"]
+  must_include: ["9"]
   must_not_include: ["has earned", "has completed the ibm"]
 
 # ---------- unanswerable ----------
