@@ -1,3 +1,6 @@
 -r requirements.txt
+# Provided by Hugging Face on the Space; needed to run app.py locally.
+gradio==6.31.0
+spaces==0.52.1
 pytest==9.2.0
 gradio_client==2.7.2
