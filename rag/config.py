@@ -21,6 +21,8 @@ class Settings:
     max_new_tokens: int
     max_question_chars: int
     max_sources: int
+    generator: str = "groq"            # "groq" (hosted API) or "hf" (model on the Space's GPU)
+    reasoning_effort: str | None = None  # for reasoning models on Groq, e.g. "low"
 
 
 def load_settings(path: str | os.PathLike = DEFAULT_CONFIG) -> Settings:

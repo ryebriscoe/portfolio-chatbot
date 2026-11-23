@@ -3,7 +3,11 @@
 
 content_url: https://ryebriscoe.github.io/chatbot-content.json
 embed_model: BAAI/bge-small-en-v1.5
-gen_model: Qwen/Qwen3-4B-Instruct-2507   # chosen by the Colab comparison (D20)
+# Where answers are written (D23): "groq" calls Groq's hosted API (no per-visitor
+# GPU limits); "hf" runs gen_model on the Space's ZeroGPU (D20 picked Qwen3-4B for that).
+generator: groq
+gen_model: openai/gpt-oss-20b       # Groq model id
+reasoning_effort: low               # gpt-oss thinks before answering; keep it short
 
 # --- retrieval (finding the right chunks) ---
 # bge models expect this instruction in front of questions, not in front of chunks (D15)
@@ -16,6 +20,6 @@ min_score: 0.5            # chunks scoring below this are ignored; if none pass,
 # --- generation (writing the answer) ---
 history_turns: 2          # previous exchanges sent with each question
 temperature: 0.2
-max_new_tokens: 250
+max_new_tokens: 1024      # includes the model's hidden reasoning; the prompt keeps answers to 2-4 sentences
 max_question_chars: 500
 max_sources: 3

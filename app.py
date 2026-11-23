@@ -33,21 +33,34 @@ except ContentUnavailable:
     log.exception("content unavailable; answering with an 'unavailable' error")
     index = None
 
-generator = HFGenerator(settings.gen_model)
+if settings.generator == "groq":
+    from rag.groq import GroqGenerator
 
+    # Hosted API: no GPU on the Space, so visitors never hit a GPU allowance (D23).
+    try:
+        answer_writer = GroqGenerator(settings.gen_model, reasoning_effort=settings.reasoning_effort)
+    except ValueError:
+        log.exception("GROQ_API_KEY missing; answering with an 'unavailable' error")
+        index, answer_writer = None, None
 
-@gpu(duration=60)
-def generate_on_gpu(messages, temperature, max_new_tokens):
-    """Only this step uses the GPU, so instant replies cost no GPU time."""
-    yield from generator.stream(messages, temperature, max_new_tokens)
+    @gpu(duration=10)
+    def _zerogpu_placeholder():
+        """Never called. ZeroGPU Spaces expect at least one GPU function to exist."""
+else:
+    generator = HFGenerator(settings.gen_model)
 
+    @gpu(duration=60)
+    def generate_on_gpu(messages, temperature, max_new_tokens):
+        """Only this step uses the GPU, so instant replies cost no GPU time."""
+        yield from generator.stream(messages, temperature, max_new_tokens)
 
-class GPUGenerator:
-    def stream(self, messages, temperature, max_new_tokens):
-        return generate_on_gpu(messages, temperature, max_new_tokens)
+    class GPUGenerator:
+        def stream(self, messages, temperature, max_new_tokens):
+            return generate_on_gpu(messages, temperature, max_new_tokens)
 
+    answer_writer = GPUGenerator()
 
-bot = Bot(settings, index, GPUGenerator())
+bot = Bot(settings, index, answer_writer)
 
 
 def ask(question, history):

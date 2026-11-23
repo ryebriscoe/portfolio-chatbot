@@ -5,3 +5,4 @@ fastembed==0.9.1
 transformers==5.22.2
 accelerate==1.15.0
 pyyaml==6.0.3
+httpx==0.28.1

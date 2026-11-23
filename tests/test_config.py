@@ -7,13 +7,16 @@ def test_load_settings_defaults(monkeypatch):
     s = load_settings()
     assert s.content_url == "https://ryebriscoe.github.io/chatbot-content.json"
     assert s.embed_model == "BAAI/bge-small-en-v1.5"
+    assert s.generator == "groq"
+    assert s.gen_model == "openai/gpt-oss-20b"
+    assert s.reasoning_effort == "low"
     assert s.top_k == 4
     assert s.min_score == 0.5
     assert s.keyword_weight == 0.2
     assert s.query_prefix == "Represent this sentence for searching relevant passages: "
     assert s.history_turns == 2
     assert s.temperature == 0.2
-    assert s.max_new_tokens == 250
+    assert s.max_new_tokens == 1024
     assert s.max_question_chars == 500
     assert s.max_sources == 3
 
