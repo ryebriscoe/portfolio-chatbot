@@ -85,3 +85,10 @@ def test_ask_uses_sanitized_history_and_retrieval_query(settings, index):
 def test_warmup_reports_readiness_and_the_running_model(settings, index):
     assert Bot(settings, index, FakeGenerator()).warmup() == {"ready": True, "model": settings.gen_model}
     assert Bot(settings, None, FakeGenerator()).warmup() == {"ready": False, "model": settings.gen_model}
+
+
+def test_sources_follow_what_the_answer_talks_about(settings, index):
+    # Retrieval for "java" ranks CST 438 first, but the answer is about the JavaFX app.
+    gen = FakeGenerator(pieces=["He built a JavaFX ", "app with JUnit tests."])
+    events = list(Bot(settings, index, gen).ask("What has he built with Java?", []))
+    assert events[-1]["sources"][0]["id"] == "cst-338"

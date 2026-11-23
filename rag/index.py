@@ -53,6 +53,7 @@ class Index:
         texts = [c.text for c in chunks]
         self.vectors = embedder.embed(texts)
         self.keywords = KeywordScorer(texts)
+        self._row = {c.id: i for i, c in enumerate(chunks)}
 
     def score_parts(self, query: str) -> tuple[np.ndarray, np.ndarray]:
         """Return (meaning, keyword) scores for every chunk."""
@@ -64,3 +65,19 @@ class Index:
         scores = meaning + self.keyword_weight * keyword
         top = np.argsort(-scores)[:k]
         return [(self.chunks[i], float(scores[i])) for i in top if scores[i] >= min_score]
+
+    def rank_by_answer(self, answer: str, hits: list[tuple[Chunk, float]],
+                       retrieval_weight: float = 0.0) -> list[tuple[Chunk, float]]:
+        """Re-rank retrieved chunks by how closely each matches the final answer,
+        so source links reflect what the answer actually talks about (D26):
+
+            score = match to the answer + retrieval_weight * search score
+
+        The search score keeps short, generic answers ("He graduates in Fall
+        2026.") linked to the page the search found first."""
+        if not hits:
+            return []
+        a = self.embedder.embed([answer])[0]  # compared like a page, so no query prefix
+        sims = self.vectors[[self._row[c.id] for c, _ in hits]] @ a
+        scored = [(c, float(sim) + retrieval_weight * score) for (c, score), sim in zip(hits, sims.tolist())]
+        return sorted(scored, key=lambda pair: -pair[1])

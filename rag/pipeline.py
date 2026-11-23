@@ -66,5 +66,8 @@ class Bot:
 
         # 4. Attach sources, unless the model said the site doesn't cover it.
         answer = answer.strip()
-        sources = [] if is_not_covered(answer) else select_sources(hits, s.max_sources)
+        if is_not_covered(answer):
+            sources = []
+        else:  # link the retrieved pages closest to what the answer says (D26)
+            sources = select_sources(self.index.rank_by_answer(answer, hits, s.source_retrieval_weight), s.max_sources, s.source_margin)
         yield {"answer": answer, "sources": sources, "done": True}

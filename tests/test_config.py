@@ -18,6 +18,8 @@ def test_load_settings_defaults(monkeypatch):
     assert s.max_new_tokens == 1024
     assert s.max_question_chars == 500
     assert s.max_sources == 3
+    assert s.source_margin == 0.1
+    assert s.source_retrieval_weight == 0.5
 
 
 def test_env_overrides_gen_model(monkeypatch):

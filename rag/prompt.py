@@ -1,5 +1,7 @@
 """Prompt assembly, input validation, and source selection (decision D11)."""
 
+import re
+
 from rag.chunker import Chunk
 
 SYSTEM_PROMPT = """You answer questions from recruiters about Ariya Briscoe, a Computer Science
@@ -60,8 +62,20 @@ def sanitize_history(raw: object, turns: int, max_turn_chars: int = MAX_TURN_CHA
     return clean[-turns:] if turns > 0 else []
 
 
+# Words that point back to the previous question ("What tools does it use?").
+REFERRING = frozenset("it its that this those these them they there one ones same also else more".split())
+
+
+def is_follow_up(question: str) -> bool:
+    """A follow-up refers back ("it", "that", ...) or is very short ("what tech?")."""
+    words = re.findall(r"[a-z']+", question.lower())
+    return len(words) <= 3 or any(w in REFERRING for w in words)
+
+
 def retrieval_query(question: str, history: list[tuple[str, str]]) -> str:
-    return f"{history[-1][0]}\n{question}" if history else question
+    """Search with the previous question too, but only for follow-ups, so a
+    new topic isn't mixed with the last one (decision D26)."""
+    return f"{history[-1][0]}\n{question}" if history and is_follow_up(question) else question
 
 
 def format_context(hits: list[Hit]) -> str:
@@ -79,12 +93,19 @@ def build_messages(question: str, history: list[tuple[str, str]], hits: list[Hit
     return messages
 
 
-def select_sources(hits: list[Hit], max_sources: int) -> list[dict[str, str]]:
+def select_sources(hits: list[Hit], max_sources: int, margin: float | None = None) -> list[dict[str, str]]:
+    """Up to max_sources links, best first: each page shown once, and (with a
+    margin) only pages scoring within `margin` of the best one (decision D26)."""
+    if not hits:
+        return []
+    cutoff = hits[0][1] - margin if margin is not None else float("-inf")
     sources, seen = [], set()
-    for c, _ in hits:
-        if c.doc_id in seen:
+    for c, score in hits:
+        if score < cutoff:
+            break
+        if c.doc_id in seen or c.url in seen:
             continue
-        seen.add(c.doc_id)
+        seen.update((c.doc_id, c.url))
         sources.append({"id": c.doc_id, "title": c.title, "url": c.url})
         if len(sources) == max_sources:
             break

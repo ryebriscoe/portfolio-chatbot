@@ -73,3 +73,28 @@ def test_score_parts_add_up_to_search_score(docs):
     chunk, score = index.search("java spring", k=1, min_score=0.0)[0]
     i = index.chunks.index(chunk)
     assert abs(score - (meaning[i] + 0.2 * keyword[i])) < 1e-6
+
+
+def test_rank_by_answer_orders_hits_by_similarity_to_the_answer(docs):
+    index, _ = build(docs)
+    hits = index.search("java", k=4, min_score=0.0)
+    ranked = index.rank_by_answer("He built a JavaFX app with JUnit tests.", hits)
+    assert ranked[0][0].doc_id == "cst-338"
+    assert {c.id for c, _ in ranked} == {c.id for c, _ in hits}
+    scores = [s for _, s in ranked]
+    assert scores == sorted(scores, reverse=True)
+
+
+def test_rank_by_answer_embeds_the_answer_as_a_passage(docs):
+    index, embedder = build(docs)
+    index.rank_by_answer("He built a JavaFX app.", index.search("java", k=2, min_score=0.0))
+    assert embedder.query_flags[-1] is False  # no query prefix: the answer is compared like a page
+
+
+def test_rank_by_answer_falls_back_to_search_order_for_generic_answers(docs):
+    index, _ = build(docs)
+    hits = index.search("java spring", k=4, min_score=0.0)
+    # "Yes." matches nothing in particular, so the search score decides the order.
+    ranked = index.rank_by_answer("Yes.", hits, retrieval_weight=0.5)
+    assert ranked[0][0].id == hits[0][0].id
+    assert abs(ranked[0][1] - 0.5 * hits[0][1]) < 1e-6

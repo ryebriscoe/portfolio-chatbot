@@ -117,3 +117,33 @@ def test_not_covered_reply_matches_the_prompt_rule():
     assert is_not_covered(NOT_COVERED_REPLY)
     assert is_not_covered("Sorry, that isn’t covered on Ariya’s portfolio.")
     assert not is_not_covered("He built a Spring Boot app.")
+
+
+def test_retrieval_query_adds_previous_question_for_referring_words():
+    history = [("Tell me about his basketball project", "...")]
+    assert retrieval_query("What tools does it use?", history) == (
+        "Tell me about his basketball project\nWhat tools does it use?")
+    assert retrieval_query("Tell me more about that", history).startswith("Tell me about his basketball project\n")
+
+
+def test_retrieval_query_keeps_a_new_topic_on_its_own():
+    history = [("What AI certifications is he working on?", "...")]
+    assert retrieval_query("Tell me about his basketball project", history) == "Tell me about his basketball project"
+    assert retrieval_query("Has he done any freelance work?", history) == "Has he done any freelance work?"
+
+
+def test_select_sources_shows_each_page_once():
+    about = chunk("about-about-me", title="About me", url="/")
+    goals = chunk("about-goals", title="Goals", url="/")
+    bad = chunk("project-bad", title="B.A.D.", url="/projects/")
+    assert [s["id"] for s in select_sources([(about, 0.9), (goals, 0.88), (bad, 0.85)], 3)] == [
+        "about-about-me", "project-bad"]
+
+
+def test_select_sources_drops_pages_far_below_the_best_match():
+    best = chunk("project-freelance", title="Freelance", url="/projects/")
+    near = chunk("about-about-me", title="About me", url="/")
+    far = chunk("cst-300", title="CST 300", url="/courses/cst-300/")
+    hits = [(best, 0.80), (near, 0.72), (far, 0.55)]
+    assert [s["id"] for s in select_sources(hits, 3, margin=0.1)] == ["project-freelance", "about-about-me"]
+    assert [s["id"] for s in select_sources(hits, 3)] == ["project-freelance", "about-about-me", "cst-300"]

@@ -23,3 +23,5 @@ temperature: 0.2
 max_new_tokens: 1024      # includes the model's hidden reasoning; the prompt keeps answers to 2-4 sentences
 max_question_chars: 500
 max_sources: 3
+source_margin: 0.1        # sources = retrieved pages closest to the answer, within 0.1 of the best (D26)
+source_retrieval_weight: 0.5  # source score = match to the answer + 0.5 x search score (D26)
