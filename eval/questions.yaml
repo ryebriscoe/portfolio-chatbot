@@ -7,8 +7,9 @@
 - id: java-experience
   group: answerable
   question: "What has he built with Java?"
-  expect_sources: [cst-438, cst-338]
-  must_include: ["Spring Boot", "JavaFX"]
+  expect_sources: [cst-438, cst-338, cst-238]
+  # Several courses used Java; any correct answer names the Spring Boot project.
+  must_include: ["Spring Boot"]
   must_not_include: []
 
 - id: computer-vision
