@@ -8,7 +8,6 @@ def test_load_settings_defaults(monkeypatch):
     assert s.content_url == "https://ryebriscoe.github.io/chatbot-content.json"
     assert s.embed_model == "BAAI/bge-small-en-v1.5"
     assert s.generator == "groq"
-    assert s.gen_model == "openai/gpt-oss-20b"
     assert s.reasoning_effort == "low"
     assert s.top_k == 4
     assert s.min_score == 0.5

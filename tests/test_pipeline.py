@@ -82,6 +82,6 @@ def test_ask_uses_sanitized_history_and_retrieval_query(settings, index):
     assert "cst-338" in {s["id"] for s in events[-1]["sources"]}
 
 
-def test_warmup_reports_readiness(settings, index):
-    assert Bot(settings, index, FakeGenerator()).warmup() == {"ready": True}
-    assert Bot(settings, None, FakeGenerator()).warmup() == {"ready": False}
+def test_warmup_reports_readiness_and_the_running_model(settings, index):
+    assert Bot(settings, index, FakeGenerator()).warmup() == {"ready": True, "model": settings.gen_model}
+    assert Bot(settings, None, FakeGenerator()).warmup() == {"ready": False, "model": settings.gen_model}

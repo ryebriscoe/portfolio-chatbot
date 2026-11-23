@@ -88,6 +88,7 @@ def run_space(questions, space_id, delay=0.0):
     from gradio_client import Client
 
     client = Client(space_id, token=os.environ.get("HF_TOKEN") or None, verbose=False)
+    running = client.predict(api_name="/warmup").get("model", "unknown")  # what's really deployed
     rows = []
     for i, q in enumerate(questions):
         if i and delay:
@@ -95,7 +96,7 @@ def run_space(questions, space_id, delay=0.0):
         final, ttft, total = _timed(client.submit(q["question"], [], api_name="/ask"))
         retrieved = [s["id"] for s in final.get("sources", [])]
         rows.append(_row(q, retrieved, final.get("answer", final.get("error", "")), ttft, total))
-    return rows
+    return rows, running
 
 
 def main(argv=None):
@@ -118,7 +119,8 @@ def main(argv=None):
     else:
         if not args.space:
             p.error("--space is required with --mode space")
-        rows, model = run_space(questions, args.space, args.delay), f"{args.space} (Space)"
+        rows, running = run_space(questions, args.space, args.delay)
+        model = f"{running} on {args.space}"
 
     summary = summarize(rows)
     summary["model"] = model

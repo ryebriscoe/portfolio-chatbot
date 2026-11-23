@@ -35,7 +35,8 @@ class Bot:
         self.generator = generator
 
     def warmup(self) -> dict:
-        return {"ready": self.index is not None}
+        """Readiness plus the model actually running, so deploys can be verified."""
+        return {"ready": self.index is not None, "model": self.settings.gen_model}
 
     def ask(self, question: object, history: object) -> Iterator[dict]:
         s = self.settings
