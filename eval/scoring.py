@@ -8,8 +8,13 @@ from rag.prompt import is_not_covered
 REFUSAL_PHRASES = ["i can only", "i can't help with", "outside what i can"]
 
 
+# Unicode lookalikes that hosted models emit, mapped to plain characters.
+_PLAIN = str.maketrans({"’": "'", " ": " ", " ": " ", " ": " ",
+                        "‑": "-", "‐": "-", "–": "-"})
+
+
 def _norm(text: str) -> str:
-    return text.lower().replace("’", "'")
+    return text.lower().translate(_PLAIN)
 
 
 def retrieval_hit(expected: list[str], retrieved_doc_ids: list[str]) -> bool:

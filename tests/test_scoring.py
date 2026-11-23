@@ -57,3 +57,10 @@ def test_to_markdown_row():
     line = to_markdown(s, "baseline")
     assert line.startswith("| ") and line.endswith(" |")
     assert "| baseline | m | 50% | 50% | 0% | 100% | 2.5 s | 4.5 s |" in line
+
+
+def test_answer_ok_treats_unicode_spaces_and_dashes_as_plain():
+    # Hosted models often write non-breaking spaces and hyphens ("Fall 2026", "self‑employed").
+    assert answer_ok("He graduates in Fall 2026.", ["Fall 2026"], []) is True
+    assert answer_ok("He is self‑employed.", ["self-employed"], []) is True
+    assert answer_ok("Fall 2026", ["fall 2026"], []) is True

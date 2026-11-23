@@ -84,12 +84,14 @@ def run_local(questions, settings, four_bit):
     return rows
 
 
-def run_space(questions, space_id):
+def run_space(questions, space_id, delay=0.0):
     from gradio_client import Client
 
-    client = Client(space_id, hf_token=os.environ.get("HF_TOKEN"), verbose=False)
+    client = Client(space_id, token=os.environ.get("HF_TOKEN") or None, verbose=False)
     rows = []
-    for q in questions:
+    for i, q in enumerate(questions):
+        if i and delay:
+            time.sleep(delay)  # stay under the model API's per-minute limit
         final, ttft, total = _timed(client.submit(q["question"], [], api_name="/ask"))
         retrieved = [s["id"] for s in final.get("sources", [])]
         rows.append(_row(q, retrieved, final.get("answer", final.get("error", "")), ttft, total))
@@ -101,6 +103,7 @@ def main(argv=None):
     p.add_argument("--mode", choices=["retrieval", "local", "space"], required=True)
     p.add_argument("--space", help="Space id for --mode space, e.g. user/ask-about-ariya")
     p.add_argument("--label", default="")
+    p.add_argument("--delay", type=float, default=0.0, help="seconds between questions (space mode)")
     p.add_argument("--4bit", dest="four_bit", action="store_true", help="load gen_model in 4-bit (Colab T4)")
     args = p.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
@@ -115,7 +118,7 @@ def main(argv=None):
     else:
         if not args.space:
             p.error("--space is required with --mode space")
-        rows, model = run_space(questions, args.space), f"{args.space} (Space)"
+        rows, model = run_space(questions, args.space, args.delay), f"{args.space} (Space)"
 
     summary = summarize(rows)
     summary["model"] = model
