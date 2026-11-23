@@ -34,10 +34,22 @@ except ContentUnavailable:
     index = None
 
 generator = HFGenerator(settings.gen_model)
-bot = Bot(settings, index, generator)
 
 
 @gpu(duration=60)
+def generate_on_gpu(messages, temperature, max_new_tokens):
+    """Only this step uses the GPU, so instant replies cost no GPU time."""
+    yield from generator.stream(messages, temperature, max_new_tokens)
+
+
+class GPUGenerator:
+    def stream(self, messages, temperature, max_new_tokens):
+        return generate_on_gpu(messages, temperature, max_new_tokens)
+
+
+bot = Bot(settings, index, GPUGenerator())
+
+
 def ask(question, history):
     yield from bot.ask(question, history)
 

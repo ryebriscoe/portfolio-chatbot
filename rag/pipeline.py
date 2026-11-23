@@ -6,7 +6,7 @@ from rag.chunker import chunk_documents
 from rag.config import Settings
 from rag.content import load_documents
 from rag.generate import Generator
-from rag.index import Embedder, Index, SentenceTransformerEmbedder
+from rag.index import Embedder, FastEmbedEmbedder, Index
 from rag.overview import overview_documents
 from rag.prompt import (
     NOT_COVERED_REPLY,
@@ -24,7 +24,7 @@ def build_index(settings: Settings, embedder: Embedder | None = None) -> Index:
     """Load the site content and turn it into a searchable index."""
     documents = load_documents(settings.content_url)
     documents += overview_documents(documents)
-    embedder = embedder or SentenceTransformerEmbedder(settings.embed_model, settings.query_prefix)
+    embedder = embedder or FastEmbedEmbedder(settings.embed_model, settings.query_prefix)
     return Index(chunk_documents(documents), embedder, settings.keyword_weight)
 
 

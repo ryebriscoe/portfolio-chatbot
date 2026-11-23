@@ -26,16 +26,23 @@ def with_prefix(texts: list[str], prefix: str, is_query: bool) -> list[str]:
     return [prefix + t for t in texts] if is_query and prefix else list(texts)
 
 
-class SentenceTransformerEmbedder:
-    def __init__(self, model_name: str, query_prefix: str = ""):
-        from sentence_transformers import SentenceTransformer
+class FastEmbedEmbedder:
+    """bge embeddings via ONNX Runtime, without torch.
 
-        self.model = SentenceTransformer(model_name, device="cpu")
+    On ZeroGPU, running torch in the main process (even on CPU) breaks the
+    GPU workers, so search uses ONNX and torch only runs for generation
+    (decision D21). The vectors match the torch version (cosine 1.0).
+    """
+
+    def __init__(self, model_name: str, query_prefix: str = ""):
+        from fastembed import TextEmbedding
+
+        self.model = TextEmbedding(model_name)
         self.query_prefix = query_prefix
 
     def embed(self, texts: list[str], is_query: bool = False) -> np.ndarray:
-        texts = with_prefix(texts, self.query_prefix, is_query)
-        return self.model.encode(texts, normalize_embeddings=True, convert_to_numpy=True).astype(np.float32)
+        vectors = np.array(list(self.model.embed(with_prefix(texts, self.query_prefix, is_query))), dtype=np.float32)
+        return vectors / np.linalg.norm(vectors, axis=1, keepdims=True)
 
 
 class Index:
