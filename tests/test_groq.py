@@ -96,3 +96,24 @@ def test_api_key_is_read_from_the_environment(monkeypatch):
     gen = GroqGenerator("m", client=httpx.Client(transport=httpx.MockTransport(handler)))
     list(gen.stream(MESSAGES, 0.2, 10))
     assert seen["auth"] == "Bearer from-env"
+
+
+def test_in_stream_error_raises_generator_error():
+    body = sse({"content": "He "}, done=False) + b'data: {"error": {"message": "overloaded"}}\n\n'
+    gen = generator_with(lambda r: httpx.Response(200, content=body))
+    with pytest.raises(GeneratorError):
+        list(gen.stream(MESSAGES, 0.2, 250))
+
+
+def test_chunks_without_choices_are_skipped():
+    body = b'data: {"choices": [], "x_groq": {"usage": {}}}\n\n' + sse({"content": "ok"})
+    assert list(generator_with(lambda r: httpx.Response(200, content=body)).stream(MESSAGES, 0.2, 250)) == ["ok"]
+
+
+def test_network_errors_become_generator_errors():
+    def handler(request):
+        raise httpx.ConnectError("no route", request=request)
+
+    with pytest.raises(GeneratorError) as err:
+        list(generator_with(handler).stream(MESSAGES, 0.2, 250))
+    assert err.value.status == 503

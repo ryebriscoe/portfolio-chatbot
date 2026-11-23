@@ -11,17 +11,11 @@ from typing import Iterator
 
 import httpx
 
-from rag.generate import drop_think_block
+from rag.generate import GeneratorError, drop_think_block
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-
-class GeneratorError(RuntimeError):
-    """The model API refused or failed the request (status is the HTTP code)."""
-
-    def __init__(self, status: int, message: str):
-        super().__init__(f"generation failed ({status}): {message}")
-        self.status = status
+__all__ = ["GROQ_URL", "GeneratorError", "GroqGenerator"]
 
 
 class GroqGenerator:
@@ -46,19 +40,26 @@ class GroqGenerator:
             body["reasoning_effort"] = self.reasoning_effort
             body["include_reasoning"] = False
         headers = {"Authorization": f"Bearer {self.api_key}"}
-        with self.client.stream("POST", GROQ_URL, json=body, headers=headers) as response:
-            if response.status_code != 200:
-                response.read()
-                raise GeneratorError(response.status_code, response.text[:300])
-            for line in response.iter_lines():
-                if not line.startswith("data:"):
-                    continue  # blank lines and ": keep-alive" comments
-                data = line[len("data:"):].strip()
-                if data == "[DONE]":
-                    return
-                delta = json.loads(data)["choices"][0].get("delta", {})
-                if delta.get("content"):
-                    yield delta["content"]
+        try:
+            with self.client.stream("POST", GROQ_URL, json=body, headers=headers) as response:
+                if response.status_code != 200:
+                    response.read()
+                    raise GeneratorError(response.status_code, response.text[:300])
+                for line in response.iter_lines():
+                    if not line.startswith("data:"):
+                        continue  # blank lines and ": keep-alive" comments
+                    data = line[len("data:"):].strip()
+                    if data == "[DONE]":
+                        return
+                    chunk = json.loads(data)
+                    if "error" in chunk:  # the API can report a failure mid-stream
+                        raise GeneratorError(502, str(chunk["error"])[:300])
+                    choices = chunk.get("choices") or []  # e.g. a final usage-only chunk
+                    delta = choices[0].get("delta", {}) if choices else {}
+                    if delta.get("content"):
+                        yield delta["content"]
+        except httpx.HTTPError as exc:  # network failure or timeout
+            raise GeneratorError(503, str(exc)[:300]) from exc
 
     def stream(self, messages, temperature, max_new_tokens) -> Iterator[str]:
         yield from drop_think_block(self._pieces(messages, temperature, max_new_tokens))

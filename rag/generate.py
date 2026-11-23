@@ -5,6 +5,15 @@ from threading import Thread
 from typing import Iterator, Protocol
 
 
+class GeneratorError(RuntimeError):
+    """The model failed or refused the request. `status` is an HTTP-style code:
+    429 means rate-limited (try again soon); anything else means unavailable."""
+
+    def __init__(self, status: int, message: str):
+        super().__init__(f"generation failed ({status}): {message}")
+        self.status = status
+
+
 class Generator(Protocol):
     def stream(self, messages: list[dict[str, str]], temperature: float, max_new_tokens: int) -> Iterator[str]:
         """Yield the answer in pieces as it is generated."""

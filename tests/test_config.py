@@ -20,6 +20,9 @@ def test_load_settings_defaults(monkeypatch):
     assert s.max_sources == 3
     assert s.source_margin == 0.1
     assert s.source_retrieval_weight == 0.5
+    assert s.content_refresh_minutes == 60
+    assert s.visitor_questions_per_minute == 10
+    assert s.visitor_questions_per_day == 100
 
 
 def test_env_overrides_gen_model(monkeypatch):

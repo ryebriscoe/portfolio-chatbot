@@ -2,7 +2,7 @@
 
 API endpoints used by the site widget:
   /ask(question, history) -> stream of {"answer", "sources", "done"} or {"error", "done"}
-  /warmup() -> {"ready": bool}
+  /warmup() -> {"ready": bool, "model": str}
 """
 
 # On ZeroGPU, `spaces` must be imported before anything initializes torch,
@@ -17,21 +17,20 @@ import logging
 import gradio as gr
 
 from rag.config import load_settings
-from rag.content import ContentUnavailable
 from rag.generate import HFGenerator, gpu
+from rag.limits import RateLimiter, client_key
 from rag.pipeline import Bot, build_index
+from rag.refresh import RefreshingIndex
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("portfolio-chatbot")
 
 settings = load_settings()
 
-try:
-    index = build_index(settings)
-    log.info("indexed %d chunks", len(index.chunks))
-except ContentUnavailable:
-    log.exception("content unavailable; answering with an 'unavailable' error")
-    index = None
+# Built now, then rebuilt from the live site every content_refresh_minutes (D27).
+# If the site is unreachable, the bot answers "unavailable" and keeps retrying.
+index = RefreshingIndex(lambda: build_index(settings),
+                        max_age=settings.content_refresh_minutes * 60, retry_after=60)
 
 if settings.generator == "groq":
     from rag.groq import GroqGenerator
@@ -60,11 +59,15 @@ else:
 
     answer_writer = GPUGenerator()
 
-bot = Bot(settings, index, answer_writer)
+limiter = RateLimiter(settings.visitor_questions_per_minute, settings.visitor_questions_per_day)
+bot = Bot(settings, index, answer_writer, limiter=limiter)
 
 
-def ask(question, history):
-    yield from bot.ask(question, history)
+def ask(question, history, request: gr.Request):
+    # Gradio fills in `request`; API callers only send question and history.
+    host = request.client.host if request and request.client else None
+    visitor = client_key(request.headers if request else {}, host)
+    yield from bot.ask(question, history, client=visitor)
 
 
 def warmup():

@@ -104,7 +104,8 @@ def main(argv=None):
     p.add_argument("--mode", choices=["retrieval", "local", "space"], required=True)
     p.add_argument("--space", help="Space id for --mode space, e.g. user/ask-about-ariya")
     p.add_argument("--label", default="")
-    p.add_argument("--delay", type=float, default=0.0, help="seconds between questions (space mode)")
+    p.add_argument("--delay", type=float, default=6.5,
+                   help="seconds between questions in space mode (the Space allows 10 a minute per visitor, D28)")
     p.add_argument("--4bit", dest="four_bit", action="store_true", help="load gen_model in 4-bit (Colab T4)")
     args = p.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):

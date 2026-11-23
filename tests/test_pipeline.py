@@ -92,3 +92,55 @@ def test_sources_follow_what_the_answer_talks_about(settings, index):
     gen = FakeGenerator(pieces=["He built a JavaFX ", "app with JUnit tests."])
     events = list(Bot(settings, index, gen).ask("What has he built with Java?", []))
     assert events[-1]["sources"][0]["id"] == "cst-338"
+
+
+class FailingGenerator:
+    def __init__(self, status, after=()):
+        self.status, self.after = status, list(after)
+
+    def stream(self, messages, temperature, max_new_tokens):
+        from rag.generate import GeneratorError
+
+        yield from self.after
+        raise GeneratorError(self.status, "boom")
+
+
+def test_rate_limited_model_api_reports_busy(settings, index):
+    events = list(Bot(settings, index, FailingGenerator(429)).ask("What has he built with Java?", []))
+    assert events[-1] == {"error": "busy", "done": True}
+
+
+def test_failing_model_api_reports_unavailable_even_mid_answer(settings, index):
+    events = list(Bot(settings, index, FailingGenerator(500, after=["He built "])).ask("What has he built with Java?", []))
+    assert events[0]["answer"] == "He built "
+    assert events[-1] == {"error": "unavailable", "done": True}
+
+
+def test_bot_uses_a_refreshing_index(settings, docs):
+    from rag.refresh import RefreshingIndex
+
+    built = Index(chunk_documents(docs), FakeEmbedder())
+    holder = RefreshingIndex(lambda: built, max_age=60, retry_after=10, background=False)
+    bot = Bot(settings, holder, FakeGenerator())
+    assert bot.warmup()["ready"] is True
+    assert list(bot.ask("What has he built with Java?", []))[-1]["done"] is True
+
+
+def test_visitor_over_the_limit_is_told_to_wait_and_the_model_is_not_called(settings, index):
+    from rag.limits import RateLimiter
+
+    gen = FakeGenerator()
+    bot = Bot(settings, index, gen, limiter=RateLimiter(per_minute=1, per_day=10))
+    assert list(bot.ask("What has he built with Java?", [], client="1.2.3.4"))[-1]["done"] is True
+    assert list(bot.ask("What has he built with Java?", [], client="1.2.3.4")) == [{"error": "rate_limited", "done": True}]
+    assert len(gen.calls) == 1
+    assert list(bot.ask("What has he built with Java?", [], client="5.6.7.8"))[-1]["done"] is True
+
+
+def test_not_covered_replies_do_not_count_against_the_limit(settings, index):
+    from rag.limits import RateLimiter
+
+    bot = Bot(settings, index, FakeGenerator(), limiter=RateLimiter(per_minute=1, per_day=10))
+    for _ in range(3):
+        assert list(bot.ask("What's the weather tomorrow?", [], client="1.2.3.4"))[-1]["sources"] == []
+    assert list(bot.ask("What has he built with Java?", [], client="1.2.3.4"))[-1]["done"] is True

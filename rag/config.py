@@ -25,6 +25,9 @@ class Settings:
     reasoning_effort: str | None = None  # for reasoning models on Groq, e.g. "low"
     source_margin: float = 0.1           # show sources within this of the best match to the answer
     source_retrieval_weight: float = 0.5 # how much the search score counts when ranking sources
+    content_refresh_minutes: float = 60  # rebuild the index from the site this often (D27)
+    visitor_questions_per_minute: int = 10  # per-visitor limits on questions that reach the model (D28)
+    visitor_questions_per_day: int = 100
 
 
 def load_settings(path: str | os.PathLike = DEFAULT_CONFIG) -> Settings:
