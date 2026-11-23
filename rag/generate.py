@@ -10,6 +10,46 @@ class Generator(Protocol):
         """Yield the answer in pieces as it is generated."""
 
 
+THINK_OPEN, THINK_CLOSE = "<think>", "</think>"
+
+
+def chat_inputs(tokenizer, messages: list[dict[str, str]]):
+    """Tokenize a chat. Thinking is turned off: Qwen3-style models otherwise
+    write a long reasoning section before answering (decision D20). Templates
+    without a thinking switch ignore the extra argument."""
+    return tokenizer.apply_chat_template(
+        messages, add_generation_prompt=True, return_tensors="pt", return_dict=True, enable_thinking=False
+    )
+
+
+def drop_think_block(pieces: Iterator[str]) -> Iterator[str]:
+    """Pass streamed text through, minus a leading <think>...</think> section."""
+    pieces = iter(pieces)
+    buffer = ""
+    for piece in pieces:
+        buffer += piece
+        head = buffer.lstrip()
+        if len(head) < len(THINK_OPEN) and THINK_OPEN.startswith(head):
+            continue  # could still become "<think>": wait for more text
+        if not head.startswith(THINK_OPEN):
+            yield buffer  # a normal answer: stream it unchanged
+            yield from pieces
+            return
+        if THINK_CLOSE in head:
+            break  # the thinking section is complete
+    else:
+        return  # the stream ended inside a thinking section
+
+    rest = head.split(THINK_CLOSE, 1)[1].lstrip()
+    while not rest:  # skip blank lines between the section and the answer
+        nxt = next(pieces, None)
+        if nxt is None:
+            return
+        rest = nxt.lstrip()
+    yield rest
+    yield from pieces
+
+
 def gpu(duration: int):
     """spaces.GPU on ZeroGPU Spaces; a no-op decorator everywhere else."""
     try:
@@ -41,9 +81,7 @@ class HFGenerator:
     def stream(self, messages, temperature, max_new_tokens):
         from transformers import TextIteratorStreamer
 
-        inputs = self.tokenizer.apply_chat_template(
-            messages, add_generation_prompt=True, return_tensors="pt", return_dict=True
-        ).to(self.model.device)
+        inputs = chat_inputs(self.tokenizer, messages).to(self.model.device)
         streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
         kwargs = dict(**inputs, streamer=streamer, max_new_tokens=max_new_tokens)
         if temperature > 0:
@@ -52,5 +90,5 @@ class HFGenerator:
             kwargs.update(do_sample=False)
         thread = Thread(target=self.model.generate, kwargs=kwargs)
         thread.start()
-        yield from streamer
+        yield from drop_think_block(iter(streamer))
         thread.join()
