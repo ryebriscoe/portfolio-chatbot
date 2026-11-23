@@ -6,7 +6,7 @@ embed_model: BAAI/bge-small-en-v1.5
 # Where answers are written (D23): "groq" calls Groq's hosted API (no per-visitor
 # GPU limits); "hf" runs gen_model on the Space's ZeroGPU (D20 picked Qwen3-4B for that).
 generator: groq
-gen_model: openai/gpt-oss-120b      # Groq model id
+gen_model: openai/gpt-oss-20b       # Groq model id, chosen by the Groq comparison (D24)
 reasoning_effort: low               # gpt-oss thinks before answering; keep it short
 
 # --- retrieval (finding the right chunks) ---
